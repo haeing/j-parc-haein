@@ -56,7 +56,7 @@ void Bethe_P10(){
   double mk = 493.677; //MeV/c2
   double mpi = 139.570; //MeV/c2
   double mom_start = 50; //MeV/c
-  double mom_end = 1000; //MeV/c
+  double mom_end = 1100; //MeV/c
   int n = 100;
   double step = (mom_end - mom_start) / n;
   for(int i=0;i<n;i++){
@@ -74,13 +74,13 @@ void Bethe_P10(){
 
   auto mg = new TMultiGraph();
   gr_p->SetLineColor(kBlue);
-  gr_p->SetLineWidth(2);
+  gr_p->SetLineWidth(4);
   gr_k->SetLineColor(kBlack);
-  gr_k->SetLineWidth(2);
+  gr_k->SetLineWidth(4);
   gr_pi->SetLineColor(kRed);
-  gr_pi->SetLineWidth(2);
+  gr_pi->SetLineWidth(4);
   gr_e->SetLineColor(kMagenta);
-  gr_e->SetLineWidth(2);
+  gr_e->SetLineWidth(4);
   
   
   mg->Add(gr_p);
@@ -101,7 +101,7 @@ void Bethe_P10(){
   //gPad->SetLogx();
   gPad->SetLogy();
   mg->SetTitle("Bethe-bloch formula;p [MeV/c];Energy loss inside the P10 gas [keV/cm]");
-  mg->GetXaxis()->SetRangeUser(60,800);
+  mg->GetXaxis()->SetRangeUser(60,1000);
   mg->Draw("a");
   le->Draw("same");
 }
