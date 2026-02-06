@@ -43,6 +43,8 @@ using namespace std;
 
 void DstEventDisplay_E42::DrawTrackHit(){
 
+  double x_bcout = 0;
+  double y_bcout = 0;
   //BcOut
   for(int i=0;i<fBcOutEvent.ntrack;i++){
     double x_ff = (*fBcOutEvent.x0)[i];
@@ -60,7 +62,11 @@ void DstEventDisplay_E42::DrawTrackHit(){
     BcOutTrack_3D[i] = new TPolyLine3D(2);
     BcOutTrack_3D[i]->SetPoint(0,-x_start,-400,y_start);
     BcOutTrack_3D[i]->SetPoint(1,-x_end,0,y_end);
+    x_bcout = x_ff;
+    y_bcout = y_ff;
   }
+  
+  
   int nhitpoint = 0;
   
   for(int i=0;i<fEvent.ntTpc;i++){
@@ -114,10 +120,21 @@ void DstEventDisplay_E42::DrawTrackHit(){
 
     double x_end = x_target + utpc*(400);
     double y_end = y_target + vtpc*(400);
+    
+    double xtpc = (x_target) + (143+150)*utpc;
+    double ytpc = (y_target) + (143+150)*vtpc;
 
+    double x_res = x_bcout - xtpc;
+    double y_res = y_bcout - ytpc;
+
+    
     Track_3D[i] = new TPolyLine3D(2);
     Track_3D[i]->SetPoint(0,-x_start,-200-143,y_start+64.45);
     Track_3D[i]->SetPoint(1,-x_end,400-143,y_end+64.45);
+    if(x_res > -10 && x_res < 10 && y_res > 55 && y_res < 80){
+      Track_3D[i]->SetLineColor(kBlue);
+    }
+    else{Track_3D[i]->SetLineColor(kGray);}
 
     
     for(int j=0;j<nhittrack;j++){
@@ -131,6 +148,8 @@ void DstEventDisplay_E42::DrawTrackHit(){
     }
     
   }
+
+  
 }
 
 void DstEventDisplay_E42::DoCanvasDraw(){
@@ -161,7 +180,7 @@ void DstEventDisplay_E42::DoCanvasDraw(){
   
   for(int i=0;i<fEvent.ntTpc;i++){
     Track_hit3D[i]->Draw("SAME");
-    Track_3D[i]->SetLineColor(pdg_color[i]);
+    //Track_3D[i]->SetLineColor(pdg_color[i]);
     Track_3D[i]->SetLineWidth(2);
     Track_3D[i]->Draw("same P");
   }
