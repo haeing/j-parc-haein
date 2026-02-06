@@ -73,8 +73,11 @@ void hsoff_beamthrough_padgain(){
 
 
   TH1D *hist_res_x = new TH1D("hist_res_x","hist_res_x",100,-50,50);
-  TH1D *hist_res_y = new TH1D("hist_res_y","hist_res_y",100,40,80);
+  TH1D *hist_res_y = new TH1D("hist_res_y","hist_res_y",100,40,100);
   TH2D *hist_res = new TH2D("hist_res","hist_res",100,-100,100,100,0,120);
+
+  TF1 *f_res_x = new TF1("f_res_x","gaus(0)",-50,50);
+  TF1 *f_res_y = new TF1("f_res_y","gaus(0)",50,100);
 
   TH1D *hist_cor_track = new TH1D("hist_cor_track","hist_cor_track",6,-0.5,5.5);
   
@@ -199,7 +202,7 @@ void hsoff_beamthrough_padgain(){
 	    double res_x = xbcout_ff - xtpc_ff;
 	    double res_y = ybcout_ff - ytpc_ff;
 
-	    if(res_x > -20 && res_x < 20 && res_y > 50 && res_y < 80)IsPionTrack++;
+	    if(res_x > -10 && res_x < 10 && res_y > 55 && res_y < 80)IsPionTrack++;
 	    
 	  }
 	}
@@ -234,8 +237,10 @@ void hsoff_beamthrough_padgain(){
   c2->Divide(2,2);
   c2->cd(1);
   hist_res_x->Draw();
+  hist_res_x->Fit("f_res_x");
   c2->cd(2);
   hist_res_y->Draw();
+  hist_res_y->Fit("f_res_y");
   c2->cd(3);
   hist_res->Draw("colz");
   c2->cd(4);
