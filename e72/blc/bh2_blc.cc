@@ -13,7 +13,7 @@ void bh2_blc(){
   int run = 2486;
   string dir = "/gpfs/group/had/sks/Users/haein/JPARC2025Nov_root";
   TFile *file_hodo = new TFile(Form("%s/run0%d_Hodoscope.root",dir.c_str(),run));
-  TFile *file_bcin = new TFile(Form("%s/run0%d_BcInTracking_bcin6.root",dir.c_str(),run));
+  TFile *file_bcin = new TFile(Form("%s/run0%d_BcInTracking_bcin13.root",dir.c_str(),run));
   TFile *file_bcout = new TFile(Form("%s/run0%d_BcOutTracking.root",dir.c_str(),run));
 
   TTree *tree_hodo = (TTree*)file_hodo->Get("hodo");
@@ -160,7 +160,7 @@ void bh2_blc(){
 
   
   TCanvas* c = new TCanvas("c", "c", 900, 700);
-  c->Print("bh2_blc_bcin6.pdf[");
+  c->Print("bh2_blc_bcin13.pdf[");
   /*
   c->Divide(4,4);
   cout<<"1"<<endl;
@@ -182,7 +182,7 @@ void bh2_blc(){
   hitpat_bcin_x->Draw("colz");
   c->cd(2);
   hitpat_bcin_y->Draw("colz");
-  c->Print("bh2_blc_bcin6.pdf");
+  c->Print("bh2_blc_bcin13.pdf");
   c->Clear();
   c->SetLeftMargin(0.15);
   c->SetRightMargin(0.15);
@@ -194,7 +194,7 @@ void bh2_blc(){
   hitpat_bcout_x->Draw("colz");
   c->cd(2);
   hitpat_bcout_y->Draw("colz");
-  c->Print("bh2_blc_bcin6.pdf");
+  c->Print("bh2_blc_bcin13.pdf");
 
   c->Clear();
   c->SetLeftMargin(0.15);
@@ -207,7 +207,7 @@ void bh2_blc(){
   hitpat_bht_bcin_x->Draw("colz");
   c->cd(2);
   hitpat_bht_bcin_y->Draw("colz");
-  c->Print("bh2_blc_bcin6.pdf");
+  c->Print("bh2_blc_bcin13.pdf");
 
   c->Clear();
   c->SetLeftMargin(0.15);
@@ -220,9 +220,9 @@ void bh2_blc(){
   hitpat_bht_bcout_x->Draw("colz");
   c->cd(2);
   hitpat_bht_bcout_y->Draw("colz");
-  c->Print("bh2_blc_bcin6.pdf");
+  c->Print("bh2_blc_bcin13.pdf");
   
-  c->Print("bh2_blc_bcin6.pdf]");
+  c->Print("bh2_blc_bcin13.pdf]");
   
     
   
