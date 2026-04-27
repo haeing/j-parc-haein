@@ -2,7 +2,7 @@
 
 const int runnumber = 2599;
 void tpctracking_padgain(){
-  string dir = "/gpfs/group/had/sks/Users/haein/JPARC2025Nov_root/gain_calib";
+  string dir = "/gpfs/group/had/sks/Users/haein/data/JPARC2025Nov_root/gain_calib";
   TFile *file = new TFile(Form("%s/run0%d_DstTPCHelixTracking.root",dir.c_str(),runnumber));
   TTree *tree = (TTree*)file->Get("tpc");
 
