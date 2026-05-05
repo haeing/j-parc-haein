@@ -1,6 +1,16 @@
 #include "../TPCPadHelper_260416.hh"
 
 const int runnumber = 2599;
+const int cutflag = 8;
+//Cut Flag
+// 0 - 000 : no cut 
+// 1 - 100 : cluster
+// 2 - 010 : y
+// 3 - 001 : mip
+// 4 - 110 : cluster y
+// 5 - 101 : cluster mip
+// 6 - 011 : y mip
+// 7 - 111 : all
 void tpchelixtracking_padgain(){
 
   string dir = "/gpfs/group/had/sks/Users/haein/data/JPARC2025Nov_root/gain_calib";
@@ -17,6 +27,7 @@ void tpchelixtracking_padgain(){
   vector<int>* nhtrack = nullptr;
   vector<vector<double>>* hitlayer = nullptr;
   vector<vector<double>>* track_cluster_de = nullptr;
+  vector<vector<double>>* track_cluster_y_center = nullptr;
   vector<vector<double>>* track_cluster_size = nullptr;
   vector<vector<double>>* track_cluster_mrow = nullptr;
   vector<vector<double>>* track_cluster_row_center = nullptr;
@@ -29,6 +40,7 @@ void tpchelixtracking_padgain(){
   tree->SetBranchAddress("nhtrack",&nhtrack);
   tree->SetBranchAddress("hitlayer",&hitlayer);
   tree->SetBranchAddress("track_cluster_de",&track_cluster_de);
+  tree->SetBranchAddress("track_cluster_y_center",&track_cluster_y_center);
   tree->SetBranchAddress("track_cluster_size",&track_cluster_size);
   tree->SetBranchAddress("track_cluster_mrow",&track_cluster_mrow);
   tree->SetBranchAddress("track_cluster_row_center",&track_cluster_row_center);
@@ -37,7 +49,8 @@ void tpchelixtracking_padgain(){
   auto TPC_gain = new TH2Poly("TPC_gain", "TPC_gain;Z;X", MinZ, MaxZ, MinX, MaxX);
   TGraph *graph_gain = new TGraph();
   auto TPC_count = new TH2Poly("TPC_count", "TPC_count;Z;X", MinZ, MaxZ, MinX, MaxX);
-  auto TPC_pid = new TH2D("TPC_pid","TPC_pid;p [GeV/#it{c}];dE/dx [A.U.]",100,0,1,100,0,500);
+  auto TPC_pid = new TH2D("TPC_pid","TPC_pid;p [GeV/#it{c}];dE/dx [A.U.]",100,0,1,500,0,500);
+  auto TPC_y = new TH1D("TPC_y","TPC_y;Y [mm];Counts",800,-400,400);
 
   double l = (586./2.)/(1+sqrt(2.));
   Double_t px[9] = {-l*(1+sqrt(2.)),-l,l,l*(1+sqrt(2.)),l*(1+sqrt(2.)),l,-l,-l*(1+sqrt(2.)),-l*(1+sqrt(2.))};
@@ -78,43 +91,60 @@ void tpchelixtracking_padgain(){
 
   double de_sum[NumOfPadTPC]={0.};
   int count[NumOfPadTPC]={0};
-  TH1D *hist_de[NumOfPadTPC];
-  TH1D *hist_de_cut[NumOfPadTPC];
+  TH1D *hist_de[cutflag][NumOfPadTPC];
+  
   int total[NumOfLayersTPC]={0};
   int hit_layer[NumOfLayersTPC]={0};
   int clu_size[NumOfLayersTPC]={0};
   TH1D *hist_clu = new TH1D("hist_clu","hist_clu;Cluster;Entries",5,-0.5,4.5);
-  TH1D *hist_clu_mipcut = new TH1D("hist_clu_mipcut","hist_clu_mipcut",5,-0.5,4.5);
-  
   
   for(int i=0;i<NumOfPadTPC;i++){
-    hist_de[i] = new TH1D(Form("hist_de%d",i),Form("hist_de%d",i),100,0,1000);
-    hist_de_cut[i] = new TH1D(Form("hist_de_cut%d",i),Form("hist_de_cut%d",i),100,0,1000);
+    hist_de[0][i] = new TH1D(Form("hist_de_000_%d",i),Form("hist_de_000_%d",i),100,0,1000);
+    hist_de[1][i] = new TH1D(Form("hist_de_100_%d",i),Form("hist_de_100_%d",i),100,0,1000);
+    hist_de[2][i] = new TH1D(Form("hist_de_010_%d",i),Form("hist_de_010_%d",i),100,0,1000);
+    hist_de[3][i] = new TH1D(Form("hist_de_001_%d",i),Form("hist_de_001_%d",i),100,0,1000);
+    hist_de[4][i] = new TH1D(Form("hist_de_110_%d",i),Form("hist_de_110_%d",i),100,0,1000);
+    hist_de[5][i] = new TH1D(Form("hist_de_101_%d",i),Form("hist_de_101_%d",i),100,0,1000);
+    hist_de[6][i] = new TH1D(Form("hist_de_011_%d",i),Form("hist_de_011_%d",i),100,0,1000);
+    hist_de[7][i] = new TH1D(Form("hist_de_111_%d",i),Form("hist_de_111_%d",i),100,0,1000);
+
   }
 
+  bool clu_cut = false; //1
+  bool y_cut = false; //-50 mm < y < 50 mm
+  bool mip_cut = false; //dEdx < 30
+  
   for(int n=0;n<tree->GetEntries();n++){
     //for(int n=0;n<50000;n++){
     tree->GetEntry(n);
+    clu_cut = false;
+    y_cut = false;
+    mip_cut = false;
     if(n%1000==0)std::cout<<n<<std::endl;
     if(ntTpc < 1)continue;
-
-    //MIP cut
+    
     for(int ntr = 0;ntr<ntTpc;ntr++){
       TPC_pid->Fill((*mom0)[ntr],(*dEdx)[ntr]);
-      //Check if all pads have hit (w/ enough statistics)
+      if((*dEdx)[ntr]<30)mip_cut = true;
       for(int nhit = 0;nhit<(*nhtrack)[ntr];nhit++){
 	hist_clu->Fill((*track_cluster_size)[ntr][nhit]);
-	if((*dEdx)[ntr]<50)hist_clu_mipcut->Fill((*track_cluster_size)[ntr][nhit]);
+	
+	if((*track_cluster_size)[ntr][nhit] == 1)clu_cut = true;
+	if((*track_cluster_y_center)[ntr][nhit] > -50 && (*track_cluster_y_center)[ntr][nhit] < 50)y_cut = true;
+	
 	int layerid = (*hitlayer)[ntr][nhit];
 	int padid = tpc::GetPadId(layerid,(*track_cluster_row_center)[ntr][nhit]);
 	double cnt = TPC_count->GetBinContent(padid+1);
-	hist_de[padid]->Fill((*track_cluster_de)[ntr][nhit]);
-	//if((*dEdx)[ntr]<50 && (*track_cluster_size)[ntr][nhit]==1){
-	if((*dEdx)[ntr]<50){
-	  TPC_count->SetBinContent(padid+1,cnt+1.);
-	  hist_de_cut[padid]->Fill((*track_cluster_de)[ntr][nhit]);
-	}
-	
+	TPC_count->SetBinContent(padid+1,cnt+1);
+	double de = (*track_cluster_de)[ntr][nhit];
+	hist_de[0][padid]->Fill(de);
+	if(clu_cut)hist_de[1][padid]->Fill(de);
+	if(y_cut)hist_de[2][padid]->Fill(de);
+	if(mip_cut)hist_de[3][padid]->Fill(de);
+	if(clu_cut && y_cut)hist_de[4][padid]->Fill(de);
+	if(clu_cut && mip_cut)hist_de[5][padid]->Fill(de);
+	if(y_cut && mip_cut)hist_de[6][padid]->Fill(de);
+	if(clu_cut && y_cut && mip_cut)hist_de[7][padid]->Fill(de);
       }
     }
   }
@@ -139,47 +169,12 @@ void tpchelixtracking_padgain(){
 
   c.Clear();
   hist_clu->Draw();
-  hist_clu_mipcut->SetLineColor(kRed);
-  hist_clu_mipcut->Draw("same");
   c.Print("padgain_fits.pdf");
   
-  /*
-  auto g_eff = new TGraph();
-  for(int i=0;i<NumOfLayersTPC;i++){
-    std::cout<<i<<"'s # of hit : "<<hit_layer[i]<<std::endl;
-    g_eff->AddPoint(i,(double)hit_layer[i] / (double) total[i]);
-  }
-  c.Print("padgain_fits.pdf");
-  
-  for(int ipad = 0;ipad <NumOfPadTPC;ipad++){
-  TF1 fL("fL", "landau", 0, 1000);
-    fL.SetParLimits(1,50,300);
-    if(count[ipad] == 0)continue;
-    hist_de[ipad]->Fit(&fL, "QR");
-    auto fit_param = fL.GetParameters();
-    
-    TPC_gain->SetBinContent(ipad+1,de_sum[ipad] / (double)count[ipad]);
-    TPC_count->SetBinContent(ipad+1,count[ipad]);
-    graph_gain->AddPoint(ipad,fit_param[1]);
-    if (ipad % 100 == 0) {
-      c.Clear();
-      hist_de[ipad]->Draw();
-      c.Print("padgain_fits.pdf");
-    }
-  }
-
-
-  
-  //TPC_gain->Draw("colz");
-  graph_gain->Draw();
-  c.Print("padgain_fits.pdf");
-  //auto c1 = new TCanvas("c1","c1");
-  */
-
   for(int ipad = 0;ipad <NumOfPadTPC;ipad++){
     TF1 fL("fL", "landau", 0, 1000);
     fL.SetParLimits(1,50,300);
-
+    
     if(ipad%30 == 0){
       if(ipad !=0)c.Print("padgain_fits.pdf");
       c.Clear();
@@ -187,19 +182,22 @@ void tpchelixtracking_padgain(){
     }
     c.cd(ipad%30+1);
     
-    hist_de_cut[ipad]->Fit(&fL, "QR");
+    hist_de[7][ipad]->Fit(&fL, "QR0");
     auto fit_param = fL.GetParameters();
 
     graph_gain->AddPoint(ipad,fit_param[1]);
     TPC_gain->SetBinContent(ipad+1,fit_param[1]);
-    hist_de[ipad]->Draw();
-    hist_de_cut[ipad]->SetLineColor(kRed);
-    hist_de_cut[ipad]->Draw("same");
-
-    
-    hist_de[ipad]->Write();
-    hist_de_cut[ipad]->Write();
+    for(int i=0;i<cutflag;i++){
+      hist_de[i][ipad]->SetLineColor(i+1);
+      if(i==0)hist_de[i][ipad]->Draw();
+      else{
+	hist_de[i][ipad]->Draw("same");
+      }
+      hist_de[i][ipad]->Write();
+    }
   }
+  TPC_pid->Write();
+  graph_gain->Write();
   
   f->Close();
   c.Print("padgain_fits.pdf");
