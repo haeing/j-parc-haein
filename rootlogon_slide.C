@@ -9,7 +9,7 @@
   style->SetPadTopMargin(0.05);
   style->SetPadBottomMargin(0.13);
   style->SetPadLeftMargin(0.13);
-  style->SetPadRightMargin(0.05);
+  style->SetPadRightMargin(0.16);
 
   // ===== Font (Times New Roman 느낌) =====
   /*
@@ -18,6 +18,7 @@
   style->SetTitleFont(42, "XYZ");
   */
 
+  
   // ===== Axis Title =====
   style->SetTitleSize(0.06, "XYZ");   // 🔥 크게
   style->SetTitleOffset(0.9, "X");
