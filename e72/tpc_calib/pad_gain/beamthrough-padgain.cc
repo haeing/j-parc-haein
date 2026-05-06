@@ -64,14 +64,16 @@ void beamthrough_padgain(){
     if(n%1000 == 0)cout<<n<<endl;
     for(int i=0;i<nclTpc;i++){
       int padid = tpc::GetPadId((*cluster_layer)[i],(*cluster_row_center)[i]);
-      if((*cluster_de)[i]>60 && (*cluster_y_center)[i] > -200 && (*cluster_y_center)[i] < -50){
+      if((*cluster_de)[i]>100 && (*cluster_y_center)[i] > -50 && (*cluster_y_center)[i] < 50){
 	double cnt = TPC_cluster->GetBinContent(padid+1);
 	TPC_cluster->SetBinContent(padid+1,cnt+1);
       }
     }
   }
-
+  
   auto c1 = new TCanvas("c1","c1");
   gPad->SetLogz();
   TPC_cluster->Draw("colz");
+  c1->Print("beamthrough-padgain.pdf");
+  
 }
