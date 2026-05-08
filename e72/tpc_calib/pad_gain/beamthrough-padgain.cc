@@ -3,7 +3,7 @@
 const int runnumber = 2489;
 
 void beamthrough_padgain(){
-  string dir = "/gpfs/group/had/sks/Users/haein/data/JPARC2025Nov_root/gain_calib";
+  string dir = "/gpfs/group/had/sks/Users/haein/data/JPARC2025Nov_root/gain_calib_noiseoff_202401";
   TFile *file = new TFile(Form("%s/run0%d_DstTPCHelixTracking.root",dir.c_str(),runnumber));
   TTree *tree = (TTree*)file->Get("tpc");
 
@@ -46,6 +46,15 @@ void beamthrough_padgain(){
   
 
   auto TPC_cluster = new TH2Poly("TPC_cluster","TPC_cluster;Z;X",MinZ,MaxZ,MinX,MaxX);
+  auto TPC_tr_cluster = new TH2Poly("TPC_tr_cluster","TPC_tr_cluster;Z;X",MinZ,MaxZ,MinX,MaxX);
+  auto TPC_gain = new TH2Poly("TPC_gain","TPC_gain;Z;X",MinZ,MaxZ,MinX,MaxX);
+  TGraph *graph_gain = new TGraph();
+  graph_gain->SetName("graph_gain");
+  TH1D *hist_de[NumOfPadTPC];
+  TH1D *hist_size = new TH1D("hist_size","hist_size",5,-0.5,4.5);
+  for(int i=0;i<NumOfPadTPC;i++){
+    hist_de[i] = new TH1D(Form("hist_de%d",i),Form("hist_de%d",i),100,0,1000);
+  }
   
   
   double l = (586./2.)/(1+sqrt(2.));
@@ -77,25 +86,109 @@ void beamthrough_padgain(){
       Y[0] = Y[4];
       for (Int_t k=0; k<5; ++k) X[k] += ZTarget;
       TPC_cluster->AddBin(5, X, Y);
+      TPC_tr_cluster->AddBin(5, X, Y);
+      TPC_gain->AddBin(5,X,Y);
     }
   }
 
-  //for(int n = 0;n<tree->GetEntries();n++){
-  for(int n = 0;n<50000;n++){
+  bool y_cut = false;
+  bool alpha_cut = false;
+  bool de_cut = false;
+  
+  for(int n = 0;n<tree->GetEntries();n++){
+  //for(int n = 0;n<10000;n++){
     tree->GetEntry(n);
+    
+    
+    
     if(n%1000 == 0)cout<<n<<endl;
     for(int i=0;i<nclTpc;i++){
       int padid = tpc::GetPadId((*cluster_layer)[i],(*cluster_row_center)[i]);
       //if((*cluster_de)[i]>100 && (*cluster_y_center)[i] > -50 && (*cluster_y_center)[i] < 50){
-	double cnt = TPC_cluster->GetBinContent(padid+1);
+      double cnt = TPC_cluster->GetBinContent(padid+1);
 	TPC_cluster->SetBinContent(padid+1,cnt+1);
 	//}
     }
+    for(int i=0;i<ntTpc;i++){
+      for(int j=0;j<(*nhtrack)[i];j++){
+	//init.
+	y_cut = false;
+	alpha_cut = false;
+	de_cut = false;
+	int padid = tpc::GetPadId((*hitlayer)[i][j],(*track_cluster_row_center)[i][j]);
+	
+	if((*track_cluster_y_center)[i][j]>-50 && (*track_cluster_y_center)[i][j]<50)y_cut = true;
+	if((*hitlayer)[i][j]<10){ //inner layer
+	  if(TMath::Abs((*theta_diff)[i][j])<0.1)alpha_cut = true;
+	  else if(TMath::Abs((*theta_diff)[i][j])>TMath::Pi()-0.1 && TMath::Abs((*theta_diff)[i][j])<TMath::Pi()+0.1)alpha_cut = true;
+	}
+	else if((*hitlayer)[i][j]>=10){ //outer layer
+	  if(TMath::Abs((*theta_diff)[i][j])<0.2)alpha_cut = true;
+	}
+	if((*track_cluster_de)[i][j]>80)de_cut = true;
+
+	if(y_cut && alpha_cut && de_cut){
+	  double cnt = TPC_tr_cluster->GetBinContent(padid+1);
+	  TPC_tr_cluster->SetBinContent(padid+1,cnt+1);
+	  hist_de[padid]->Fill((*track_cluster_de)[i][j]);
+	  hist_size->Fill((*track_cluster_size)[i][j]);
+	}
+      }
+    }
+      
   }
+
+  TFile *f = new TFile("beamthrough-padgain.root","RECREATE");
   
   auto c1 = new TCanvas("c1","c1");
-  gPad->SetLogz();
+  //gPad->SetLogz();
+  TPC_tr_cluster->Draw("colz");
+  c1->Print("beamthrough-padgain.pdf(");
+
+  for(int ipad = 0;ipad <NumOfPadTPC;ipad++){
+    TF1 fL("fL", "landau", 0, 1000);
+    fL.SetParLimits(1,50,300);
+    fL.SetLineColor(kRed);
+    
+    if(ipad%30 == 0){
+      if(ipad !=0)c1->Print("beamthrough-padgain.pdf");
+      c1->Clear();
+      c1->Divide(6,5);
+    }
+    c1->cd(ipad%30+1);
+    if(hist_de[ipad]->GetEntries()>100){
+      hist_de[ipad]->Fit(&fL, "QR");
+      auto fit_param = fL.GetParameters();
+      graph_gain->AddPoint(ipad,fit_param[1]);
+      TPC_gain->SetBinContent(ipad+1,fit_param[1]);
+    }
+
+    hist_de[ipad]->Draw();
+    hist_de[ipad]->Write();
+  }
+  
+  c1->Print("beamthrough-padgain.pdf");
+  c1->Clear();
+  
   TPC_cluster->Draw("colz");
   c1->Print("beamthrough-padgain.pdf");
+  c1->Clear();
+  hist_size->Draw();
+  c1->Print("beamthrough-padgain.pdf");
+  c1->Clear();
+  graph_gain->SetMarkerStyle(4);
+  graph_gain->Draw("AP");
+  graph_gain->Write();
+  c1->Print("beamthrough-padgain.pdf");
+
+  c1->Clear();
+  TPC_gain->SetMinimum(0);
+  TPC_gain->SetMaximum(300);
+  TPC_gain->Draw("colz");
+  TPC_gain->Write();
+  c1->Print("beamthrough-padgain.pdf)");
+
+  f->Close();
+  
   
 }

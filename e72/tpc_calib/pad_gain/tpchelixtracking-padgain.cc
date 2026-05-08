@@ -13,7 +13,7 @@ const int cutflag = 8;
 // 7 - 111 : all
 void tpchelixtracking_padgain(){
 
-  string dir = "/gpfs/group/had/sks/Users/haein/data/JPARC2025Nov_root/gain_calib";
+  string dir = "/gpfs/group/had/sks/Users/haein/data/JPARC2025Nov_root/gain_calib_noiseoff_202401";
   TFile *file = new TFile(Form("%s/run0%d_DstTPCHelixTracking.root",dir.c_str(),runnumber));
   TTree *tree = (TTree*)file->Get("tpc");
 
@@ -114,8 +114,8 @@ void tpchelixtracking_padgain(){
   bool y_cut = false; //-50 mm < y < 50 mm
   bool mip_cut = false; //dEdx < 30
   
-  for(int n=0;n<tree->GetEntries();n++){
-    //for(int n=0;n<50000;n++){
+  //for(int n=0;n<tree->GetEntries();n++){
+  for(int n=0;n<100000;n++){
     tree->GetEntry(n);
     clu_cut = false;
     y_cut = false;
