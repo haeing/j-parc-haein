@@ -3,6 +3,7 @@
 const int runnumber = 2489;
 
 void beamthrough_padgain(){
+  gROOT->SetBatch(kTRUE);
   string dir = "/gpfs/group/had/sks/Users/haein/data/JPARC2025Nov_root/gain_calib_noiseoff_202401";
   TFile *file = new TFile(Form("%s/run0%d_DstTPCHelixTracking.root",dir.c_str(),runnumber));
   TTree *tree = (TTree*)file->Get("tpc");
