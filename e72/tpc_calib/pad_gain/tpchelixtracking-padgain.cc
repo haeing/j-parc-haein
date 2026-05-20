@@ -26,6 +26,7 @@ void tpchelixtracking_padgain(){
   //Track Info
   vector<int>* nhtrack = nullptr;
   vector<vector<double>>* hitlayer = nullptr;
+  vector<vector<double>>* theta_diff = nullptr;
   vector<vector<double>>* track_cluster_de = nullptr;
   vector<vector<double>>* track_cluster_y_center = nullptr;
   vector<vector<double>>* track_cluster_size = nullptr;
@@ -39,6 +40,7 @@ void tpchelixtracking_padgain(){
   
   tree->SetBranchAddress("nhtrack",&nhtrack);
   tree->SetBranchAddress("hitlayer",&hitlayer);
+  tree->SetBranchAddress("theta_diff",&theta_diff);
   tree->SetBranchAddress("track_cluster_de",&track_cluster_de);
   tree->SetBranchAddress("track_cluster_y_center",&track_cluster_y_center);
   tree->SetBranchAddress("track_cluster_size",&track_cluster_size);
@@ -51,6 +53,7 @@ void tpchelixtracking_padgain(){
   auto TPC_count = new TH2Poly("TPC_count", "TPC_count;Z;X", MinZ, MaxZ, MinX, MaxX);
   auto TPC_pid = new TH2D("TPC_pid","TPC_pid;p [GeV/#it{c}];dE/dx [A.U.]",100,0,1,500,0,500);
   auto TPC_y = new TH1D("TPC_y","TPC_y;Y [mm];Counts",800,-400,400);
+  auto hist_dedx = new TH1D("hist_dedx","hist_dedx",500,0,100);
 
   double l = (586./2.)/(1+sqrt(2.));
   Double_t px[9] = {-l*(1+sqrt(2.)),-l,l,l*(1+sqrt(2.)),l*(1+sqrt(2.)),l,-l,-l*(1+sqrt(2.)),-l*(1+sqrt(2.))};
@@ -125,6 +128,7 @@ void tpchelixtracking_padgain(){
     
     for(int ntr = 0;ntr<ntTpc;ntr++){
       TPC_pid->Fill((*mom0)[ntr],(*dEdx)[ntr]);
+      hist_dedx->Fill((*dEdx)[ntr]);
       if((*dEdx)[ntr]<30)mip_cut = true;
       for(int nhit = 0;nhit<(*nhtrack)[ntr];nhit++){
 	hist_clu->Fill((*track_cluster_size)[ntr][nhit]);
@@ -150,7 +154,7 @@ void tpchelixtracking_padgain(){
   }
 
   
-  TFile *f = new TFile("padgain.root","RECREATE");
+  TFile *f = new TFile("tpchelixtracking-padgain.root","RECREATE");
   
   gROOT->SetBatch(kTRUE);   
   TCanvas c("c","c",900,700);
@@ -161,22 +165,26 @@ void tpchelixtracking_padgain(){
   TDatime now;
   p->AddText(Form("Generated at: %04d-%02d-%02d %02d:%02d:%02d",now.GetYear(),now.GetMonth(),now.GetDay(),now.GetHour(),now.GetMinute(),now.GetSecond()));
   p->Draw();
-  c.Print("padgain_fits.pdf(");
+  c.Print("tpchelixtracking-padgain.pdf(");
   c.Clear();
   gPad->SetLogz();
   TPC_pid->Draw("colz");
-  c.Print("padgain_fits.pdf");
+  c.Print("tpchelixtracking-padgain.pdf");
 
   c.Clear();
+  hist_dedx->Draw();
+  c.Print("tpchelixtracking-padgain.pdf");
+  
+  c.Clear();
   hist_clu->Draw();
-  c.Print("padgain_fits.pdf");
+  c.Print("tpchelixtracking-padgain.pdf");
   
   for(int ipad = 0;ipad <NumOfPadTPC;ipad++){
     TF1 fL("fL", "landau", 0, 1000);
     fL.SetParLimits(1,50,300);
     
     if(ipad%30 == 0){
-      if(ipad !=0)c.Print("padgain_fits.pdf");
+      if(ipad !=0)c.Print("tpchelixtracking-padgain.pdf");
       c.Clear();
       c.Divide(6,5);
     }
@@ -200,16 +208,16 @@ void tpchelixtracking_padgain(){
   graph_gain->Write();
   
   f->Close();
-  c.Print("padgain_fits.pdf");
+  c.Print("tpchelixtracking-padgain.pdf");
   c.Clear();
   graph_gain->SetMarkerStyle(4);
   graph_gain->Draw("AP");
-  c.Print("padgain_fits.pdf");
+  c.Print("tpchelixtracking-padgain.pdf");
   c.Clear();
   TPC_gain->Draw("colz");
-  c.Print("padgain_fits.pdf");
+  c.Print("tpchelixtracking-padgain.pdf");
   c.Clear();
   TPC_count->Draw("colz");
-  c.Print("padgain_fits.pdf)");   
+  c.Print("tpchelixtracking-padgain.pdf)");   
    
 }

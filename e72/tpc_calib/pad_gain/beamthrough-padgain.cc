@@ -95,6 +95,7 @@ void beamthrough_padgain(){
   bool y_cut = false;
   bool alpha_cut = false;
   bool de_cut = false;
+  bool cluster_cut = false;
   
   for(int n = 0;n<tree->GetEntries();n++){
   //for(int n = 0;n<10000;n++){
@@ -116,6 +117,7 @@ void beamthrough_padgain(){
 	y_cut = false;
 	alpha_cut = false;
 	de_cut = false;
+	cluster_cut = false;
 	int padid = tpc::GetPadId((*hitlayer)[i][j],(*track_cluster_row_center)[i][j]);
 	
 	if((*track_cluster_y_center)[i][j]>-50 && (*track_cluster_y_center)[i][j]<50)y_cut = true;
@@ -127,8 +129,10 @@ void beamthrough_padgain(){
 	  if(TMath::Abs((*theta_diff)[i][j])<0.2)alpha_cut = true;
 	}
 	if((*track_cluster_de)[i][j]>80)de_cut = true;
+	if((*track_cluster_size)[i][j] == 1)cluster_cut = true;
 
-	if(y_cut && alpha_cut && de_cut){
+	//if(y_cut && alpha_cut && de_cut){
+	if(y_cut && alpha_cut && cluster_cut){
 	  double cnt = TPC_tr_cluster->GetBinContent(padid+1);
 	  TPC_tr_cluster->SetBinContent(padid+1,cnt+1);
 	  hist_de[padid]->Fill((*track_cluster_de)[i][j]);
@@ -142,7 +146,7 @@ void beamthrough_padgain(){
   TFile *f = new TFile("beamthrough-padgain.root","RECREATE");
   
   auto c1 = new TCanvas("c1","c1");
-  //gPad->SetLogz();
+  gPad->SetLogz();
   TPC_tr_cluster->Draw("colz");
   c1->Print("beamthrough-padgain.pdf(");
 
