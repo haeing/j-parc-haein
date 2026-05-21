@@ -148,6 +148,7 @@ void beamthrough_padgain(){
   auto c1 = new TCanvas("c1","c1");
   gPad->SetLogz();
   TPC_tr_cluster->Draw("colz");
+  TPC_tr_cluster->Write();
   c1->Print("beamthrough-padgain.pdf(");
 
   for(int ipad = 0;ipad <NumOfPadTPC;ipad++){

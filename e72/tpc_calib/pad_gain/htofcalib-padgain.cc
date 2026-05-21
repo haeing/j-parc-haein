@@ -108,8 +108,8 @@ void htofcalib_padgain(int runnumber){
   bool de_cut = false;
   bool cluster_cut = false;
   
-  //for(int n = 0;n<tree->GetEntries();n++){
-  for(int n = 0;n<50000;n++){
+  for(int n = 0;n<tree->GetEntries();n++){
+  //for(int n = 0;n<50000;n++){
     tree->GetEntry(n);
     
     

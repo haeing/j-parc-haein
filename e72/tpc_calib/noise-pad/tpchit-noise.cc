@@ -1,9 +1,10 @@
 #include "../TPCPadHelper_260416.hh"
 
 void tpchit_noise(){
+  const int runnumber = 3396;
   //string dir = "/home/had/haein/data/JPARC2021May_root";
   string dir = "/hsm/had/sks/E72/JPARC2025Nov/rootfile/tpchit/v2";
-  TFile *file = new TFile(Form("%s/run02489_TPCHit.root",dir.c_str()));
+  TFile *file = new TFile(Form("%s/run0%d_TPCHit.root",dir.c_str(),runnumber));
   TTree *tree = (TTree*)file->Get("tpc");
 
   int nhTpc;
@@ -48,16 +49,23 @@ void tpchit_noise(){
     }
   }
 
-  for(int n=0;n<50000;n++){
+  //for(int n=0;n<50000;n++){
+  for(int n=0;n<tree->GetEntries();n++){
     tree->GetEntry(n);
+    cout<<nhTpc<<endl;
     for(int i=0;i<nhTpc;i++){
       double cnt = TPC_hit->GetBinContent((*padTpc)[i]+1);
       TPC_hit->SetBinContent((*padTpc)[i]+1,cnt+1);
     }
   }
 
+  TFile *f = new TFile(Form("tpchit-noise-run0%d.root",runnumber),"RECREATE");
+  
   auto c1 = new TCanvas("c1","c1");
   gPad->SetLogz();
   TPC_hit->Draw("colz");
+  TPC_hit->Write();
+
+  f->Close();
 
 }
