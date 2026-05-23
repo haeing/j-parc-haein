@@ -1,7 +1,6 @@
-//0 origin
+#include "TPCPadHelper_2401.hh"
 
-//run03396 (HS On, clk trig, threshold 0 - unbiased), waveform check (cross check)
-
+const int noisepad_2025nov[] = {
 //section1 left
 1508,1509,1510,1511,1512,
 1287,1288,1289,1290,
@@ -118,6 +117,55 @@
 4414,4415,4416,4417,4418,4419,4420,4421,4422,4423,4424,4425,4426,4427,4428,4429,4430,4431,4432,4433,4434,4435,4436,4437,4438,4439,4440,4441,4442,4443,4444,4445,4446,4447,4448,
 4661,4662,4663
 
+};
+void check_2025nov()
+{
+  auto TPC_noise = new TH2Poly("TPC_noise","TPC_noise;Z;X",MinZ,MaxZ,MinX,MaxX);
+  
+  
+  double l = (586./2.)/(1+sqrt(2.));
+  Double_t px[9] = {-l*(1+sqrt(2.)),-l,l,l*(1+sqrt(2.)),l*(1+sqrt(2.)),l,-l,-l*(1+sqrt(2.)),-l*(1+sqrt(2.))};
+  Double_t py[9] = {l,l*(1+sqrt(2.)),l*(1+sqrt(2.)),l,-l,-l*(1+sqrt(2.)),-l*(1+sqrt(2.)),-l,l};
+  
+  auto pLine = new TPolyLine(9,px,py);
+
+  Double_t X[5];
+  Double_t Y[5];
+  for (Int_t l=0; l<NumOfLayersTPC; ++l) {
+    Double_t pLength = tpc::padParameter[l][5];
+    Double_t st      = (180.-(360./tpc::padParameter[l][3]) *
+                        tpc::padParameter[l][1]/2.);
+    Double_t sTheta  = (-1+st/180.)*TMath::Pi();
+    Double_t dTheta  = (360./tpc::padParameter[l][3])/180.*TMath::Pi();
+    Double_t cRad    = tpc::padParameter[l][2];
+    Int_t    nPad    = tpc::padParameter[l][1];
+    for (Int_t j=0; j<nPad; ++j) {
+      X[1] = (cRad+(pLength/2.))*TMath::Cos(j*dTheta+sTheta);
+      X[2] = (cRad+(pLength/2.))*TMath::Cos((j+1)*dTheta+sTheta);
+      X[3] = (cRad-(pLength/2.))*TMath::Cos((j+1)*dTheta+sTheta);
+      X[4] = (cRad-(pLength/2.))*TMath::Cos(j*dTheta+sTheta);
+      X[0] = X[4];
+      Y[1] = (cRad+(pLength/2.))*TMath::Sin(j*dTheta+sTheta);
+      Y[2] = (cRad+(pLength/2.))*TMath::Sin((j+1)*dTheta+sTheta);
+      Y[3] = (cRad-(pLength/2.))*TMath::Sin((j+1)*dTheta+sTheta);
+      Y[4] = (cRad-(pLength/2.))*TMath::Sin(j*dTheta+sTheta);
+      Y[0] = Y[4];
+      for (Int_t k=0; k<5; ++k) X[k] += ZTarget;
+      TPC_noise->AddBin(5, X, Y);
+    }
+  }
+
+  //0 origin
+  int n = sizeof(noisepad_2025nov) / sizeof(noisepad_2025nov[0]);
+  for(int i=0;i<n;i++){
+    TPC_noise->SetBinContent(noisepad_2025nov[i]+1,1);
+  }
 
 
-
+  TFile *f = new TFile("check-2025nov.root","RECREATE");
+    
+  auto c1 = new TCanvas("c1","c1");
+  TPC_noise->Draw("colz");
+  TPC_noise->Write();
+  f->Close();
+}

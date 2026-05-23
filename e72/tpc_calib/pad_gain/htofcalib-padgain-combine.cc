@@ -1,10 +1,10 @@
 #include "../TPCPadHelper_260416.hh"
 
-const int runnumber[7] = {2599, 2601, 2602, 2603, 2604, 2606, 2607};
+const int runnumber[8] = {2489,2599, 2601, 2602, 2603, 2604, 2606, 2607};
 
 void htofcalib_padgain_combine(){
   gROOT->SetBatch(kTRUE);
-  string outpdf = "htofcalib-padgain-combine.pdf";
+  string outpdf = "htofcalib-padgain-combine-minlayer5.pdf";
   
   TH1D *hist_de[NumOfPadTPC];
   /*
@@ -50,8 +50,8 @@ void htofcalib_padgain_combine(){
     }
   }
   
-  for(int i=0;i<7;i++){
-    TFile *file = new TFile(Form("htofcalib-padgain-run0%d.root",runnumber[i]));
+  for(int i=0;i<8;i++){
+    TFile *file = new TFile(Form("htofcalib-padgain-run0%d-minlayer5.root",runnumber[i]));
     TH2Poly *TPC_tr_cluster = (TH2Poly*)file->Get("TPC_tr_cluster");
     
     for(int n=0;n<TPC_tr_cluster->GetNumberOfBins();n++){
@@ -72,7 +72,7 @@ void htofcalib_padgain_combine(){
   }
 
 
-  TFile *f = new TFile("htofcalib-padgain-combine.root","RECREATE");
+  TFile *f = new TFile("htofcalib-padgain-combine-minlayer5.root","RECREATE");
   
   auto c1 = new TCanvas("c1","c1");
   gStyle->SetOptStat(0);
@@ -88,7 +88,7 @@ void htofcalib_padgain_combine(){
 
 
   for(int ipad = 0;ipad <NumOfPadTPC;ipad++){
-    TF1 fL("fL", "landau", 0, 500);
+    TF1 fL("fL", "landau", 100, 700);
     fL.SetParLimits(1,10,500);
     fL.SetLineColor(kRed);
     

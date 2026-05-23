@@ -3,10 +3,10 @@
 
 void htofcalib_padgain(int runnumber){
   gROOT->SetBatch(kTRUE);
-  string dir = "/gpfs/group/had/sks/Users/haein/data/JPARC2025Nov_root/gain_calib_noiseoff_202401";
+  string dir = "/gpfs/group/had/sks/Users/haein/data/JPARC2025Nov_root/gain_calib_noiseoff_202401_minlayer5";
   TFile *file = new TFile(Form("%s/run0%d_DstTPCHelixTracking.root",dir.c_str(),runnumber));
   TTree *tree = (TTree*)file->Get("tpc");
-  string outpdf = Form("htofcalib-padgain-run0%d.pdf", runnumber);
+  string outpdf = Form("htofcalib-padgain-run0%d-minlayer5.pdf", runnumber);
 
 
   vector<double>* mom0 = nullptr;
@@ -156,7 +156,7 @@ void htofcalib_padgain(int runnumber){
       
   }
 
-  TFile *f = new TFile(Form("htofcalib-padgain-run0%d.root",runnumber),"RECREATE");
+  TFile *f = new TFile(Form("htofcalib-padgain-run0%d-minlayer5.root",runnumber),"RECREATE");
   
   auto c1 = new TCanvas("c1","c1");
   gStyle->SetOptStat(0);
