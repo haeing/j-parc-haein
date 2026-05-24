@@ -1,21 +1,68 @@
 #include "../TPCPadHelper_260416.hh"
 
 const int runnumber[8] = {2489,2599, 2601, 2602, 2603, 2604, 2606, 2607};
+struct FitResult {
+  TF1  *f = nullptr;
+  TH1D *h = nullptr;
+  int rebin = 1;
+};
+
+bool IsGoodLandauFit(TH1D* h, TF1* f)
+{
+  if(!h || !f) return false;
+  if(h->GetEntries() < 80) return false;
+  if(f->GetNDF() <= 0) return false;
+  
+  double chi2ndf = f->GetChisquare() / f->GetNDF();
+  if(chi2ndf > 5.0) return false;
+  
+  double mpv   = f->GetParameter(1);
+  double sigma = f->GetParameter(2);
+  if(mpv < 50 || mpv > 300) return false;
+  //if(sigma > 100) return false;
+
+  return true;
+}
+
+FitResult FitLandauWithRetry(TH1D *hraw){
+  std::vector<int> rebinList = {1, 2, 4};
+  for(auto rebin : rebinList){
+
+    TH1D *h = (TH1D*)hraw->Clone(Form("%s_tmp_rebin%d", hraw->GetName(), rebin));
+    h->SetDirectory(0);
+    h->Rebin(rebin);
+    TF1 *f = new TF1(Form("f_%s", hraw->GetName()),"landau",100,700);
+    f->SetParameter(1,200);
+    f->SetParameter(2,33);
+    f->SetLineColor(kRed);
+    int status = h->Fit(f,"RQ0");
+    if(IsGoodLandauFit(h, f)){
+      h->GetListOfFunctions()->Add(f);
+
+      return {f, h, rebin};
+    }
+    delete f;
+    delete h;
+  }
+  return {};
+}
 
 void htofcalib_padgain_combine(){
   gROOT->SetBatch(kTRUE);
   string outpdf = "htofcalib-padgain-combine-260523.pdf";
   
   TH1D *hist_de[NumOfPadTPC];
-  /*
-  for(int i=0;i<NumOfPadTPC;i++){
-    hist_de[i] = new TH1D(Form("hist_de%d",i),Form("hist_de%d",i),100,0,1000);
-  }
-  */
+
   TH2Poly *TPC_count = new TH2Poly("TPC_count","TPC_count;Z;X",MinZ,MaxZ,MinX,MaxX);
   auto TPC_gain = new TH2Poly("TPC_gain","TPC_gain;Z;X",MinZ,MaxZ,MinX,MaxX);
   TGraph *graph_gain = new TGraph();
+  TGraph *graph_chi = new TGraph();
+  TGraph *graph_sigma = new TGraph();
   graph_gain->SetName("graph_gain");
+  graph_chi->SetName("graph_chi");
+  graph_sigma->SetName("graph_sigma");
+  TH1D *hist_chi = new TH1D("hist_chi","hist_chi;#chi^2/NDF;Counts",500,0,10);
+  TH1D *hist_sigma = new TH1D("hist_sigma","hist_sigma;#sigma;Counts",100,0,200);
 
   double l = (586./2.)/(1+sqrt(2.));
   Double_t px[9] = {-l*(1+sqrt(2.)),-l,l,l*(1+sqrt(2.)),l*(1+sqrt(2.)),l,-l,-l*(1+sqrt(2.)),-l*(1+sqrt(2.))};
@@ -88,40 +135,64 @@ void htofcalib_padgain_combine(){
 
 
   for(int ipad = 0;ipad <NumOfPadTPC;ipad++){
-    TF1 fL("fL", "landau", 100, 700);
-    fL.SetParLimits(1,10,500);
-    fL.SetLineColor(kRed);
-    
+
     if(ipad%30 == 0){
       if(ipad !=0)c1->Print(outpdf.c_str());
       c1->Clear();
       c1->Divide(6,5);
     }
     c1->cd(ipad%30+1);
-    if(hist_de[ipad]->GetEntries()>80){
-      hist_de[ipad]->Fit(&fL, "QR");
-      auto fit_param = fL.GetParameters();
-      graph_gain->AddPoint(ipad,fit_param[1]);
-      TPC_gain->SetBinContent(ipad+1,fit_param[1]);
-    }
+    FitResult res = FitLandauWithRetry(hist_de[ipad]);
+    if(res.f && res.h){
+      auto fit_param = res.f->GetParameters();
+      double chi2ndf = res.f->GetChisquare() / res.f->GetNDF();
+      hist_chi->Fill(chi2ndf);
+      hist_sigma->Fill(fit_param[2]);
+      graph_gain->AddPoint(ipad, fit_param[1]);
+      graph_chi->AddPoint(ipad, chi2ndf);
+      graph_sigma->AddPoint(ipad, fit_param[2]);
 
-    hist_de[ipad]->Draw();
-    hist_de[ipad]->Write();
+      TPC_gain->SetBinContent(ipad+1, fit_param[1]);
+      res.h->Draw();
+      res.f->Draw("same");
+      //res.h->Write(hist_de[ipad]->GetName());
+      res.h->Write(Form("hist_de%d",ipad));
+      //res.f->Write(Form("%s_fitfunc", hist_de[ipad]->GetName()));
+
+    }
+    else{
+      hist_de[ipad]->Draw();
+      hist_de[ipad]->Write();
+    }
   }
 
   c1->Print(outpdf.c_str());
   
   c1->Clear();
+  
   TPC_gain->SetMinimum(0);
   TPC_gain->SetMaximum(400);
+  
   TPC_gain->Draw("colz");
   TPC_gain->Write();
   c1->Print(outpdf.c_str());
 
   c1->Clear();
+  auto mg = new TMultiGraph();
   graph_gain->SetMarkerStyle(4);
-  graph_gain->Draw("AP");
+  mg->Add(graph_gain);
   graph_gain->Write();
+
+  graph_chi->SetMarkerStyle(4);
+  graph_chi->SetMarkerColor(kRed);
+  mg->Add(graph_chi);
+  graph_chi->Write();
+
+  graph_sigma->SetMarkerStyle(4);
+  graph_sigma->SetMarkerColor(kBlue);
+  mg->Add(graph_sigma);
+  graph_sigma->Write();
+  mg->Draw("AP");
   c1->Print(outpdf.c_str());
 
   
@@ -131,5 +202,7 @@ void htofcalib_padgain_combine(){
   TPC_count->Draw("colz");
   TPC_count->Write();
   c1->Print((outpdf + ")").c_str());
+  hist_chi->Write();
+  hist_sigma->Write();
   f->Close();
 }

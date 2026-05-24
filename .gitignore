@@ -1,2 +1,4 @@
 data/
 e72/bac/g4_bac/build/
+*.root
+*.pdf
