@@ -4,7 +4,7 @@ const int runnumber[8] = {2489,2599, 2601, 2602, 2603, 2604, 2606, 2607};
 
 void htofcalib_padgain_combine(){
   gROOT->SetBatch(kTRUE);
-  string outpdf = "htofcalib-padgain-combine-minlayer5.pdf";
+  string outpdf = "htofcalib-padgain-combine-260523.pdf";
   
   TH1D *hist_de[NumOfPadTPC];
   /*
@@ -51,7 +51,7 @@ void htofcalib_padgain_combine(){
   }
   
   for(int i=0;i<8;i++){
-    TFile *file = new TFile(Form("htofcalib-padgain-run0%d-minlayer5.root",runnumber[i]));
+    TFile *file = new TFile(Form("htofcalib-padgain-run0%d-260523.root",runnumber[i]));
     TH2Poly *TPC_tr_cluster = (TH2Poly*)file->Get("TPC_tr_cluster");
     
     for(int n=0;n<TPC_tr_cluster->GetNumberOfBins();n++){
@@ -72,7 +72,7 @@ void htofcalib_padgain_combine(){
   }
 
 
-  TFile *f = new TFile("htofcalib-padgain-combine-minlayer5.root","RECREATE");
+  TFile *f = new TFile("htofcalib-padgain-combine-260523.root","RECREATE");
   
   auto c1 = new TCanvas("c1","c1");
   gStyle->SetOptStat(0);

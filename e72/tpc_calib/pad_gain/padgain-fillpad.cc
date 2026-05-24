@@ -40,7 +40,7 @@ bool IsFrameHighEdge(int layer, int row)
 }
 
 void padgain_fillpad(){
-  TFile *file = new TFile("htofcalib-padgain-combine-minlayer5.root");
+  TFile *file = new TFile("htofcalib-padgain-combine-260523.root");
   TPC_gain = (TH2Poly*)file->Get("TPC_gain");
 
   TH2Poly *TPC_gain_all = new TH2Poly("TPC_gain_all","TPC_gain_all;Z [mm];X [mm]",MinZ,MaxZ,MinX,MaxX);
@@ -186,7 +186,7 @@ void padgain_fillpad(){
   
 
 
-  TFile *f = new TFile("padgain-fillpad.root","RECREATE");
+  TFile *f = new TFile("padgain-fillpad-260523.root","RECREATE");
   TPC_gain->Write();
   TPC_gain_all->Write();
   f->Close();
