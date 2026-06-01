@@ -118,6 +118,83 @@ const int noisepad_2025nov[] = {
 4661,4662,4663
 
 };
+
+const int noisepad_2025nov_wf[] = {
+  //section1 left -> No
+
+
+//section1 right
+812,
+629,
+470,
+335,
+224,
+137,
+74,
+57,58,
+108,109,
+183,184,
+283,
+406,
+553,
+724,
+919,
+1138,
+1361,
+1562,1563,
+1776,
+
+//section1 right edge
+1450,1451,1452,1453,
+
+//section2 left
+1818,
+2034,2035,2036,
+2244,2245,2246,
+2453,2454,2455,
+2667,2668,
+2885,2886,2887,
+3110,3111,
+3341,3342,
+3578,3579,
+3813,
+4034,4035,
+
+//section2 right
+1630,
+1850,1851,
+2069,
+2278,
+2487,
+2700,2701,
+2919,
+3143,
+3374,
+3612,
+3846,
+4067,
+4277,4278,
+4482,
+4682,
+4879,
+5073,5074,
+
+//section3 left -> No
+
+//section3 right -> No
+
+//section3 bottom edge
+4105,4106,
+5112,5113,
+
+//section3 top edge
+4171,4172,
+5214,5215,
+
+//section4 left -> No
+
+//section4 right -> No
+};
 void check_2025nov()
 {
   auto TPC_noise = new TH2Poly("TPC_noise","TPC_noise;Z;X",MinZ,MaxZ,MinX,MaxX);
@@ -156,13 +233,13 @@ void check_2025nov()
   }
 
   //0 origin
-  int n = sizeof(noisepad_2025nov) / sizeof(noisepad_2025nov[0]);
+  int n = sizeof(noisepad_2025nov_wf) / sizeof(noisepad_2025nov_wf[0]);
   for(int i=0;i<n;i++){
-    TPC_noise->SetBinContent(noisepad_2025nov[i]+1,1);
+    TPC_noise->SetBinContent(noisepad_2025nov_wf[i]+1,1);
   }
 
 
-  TFile *f = new TFile("check-2025nov.root","RECREATE");
+  TFile *f = new TFile("check-2025nov-wf.root","RECREATE");
     
   auto c1 = new TCanvas("c1","c1");
   TPC_noise->Draw("colz");

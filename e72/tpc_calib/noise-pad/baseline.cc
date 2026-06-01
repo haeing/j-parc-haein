@@ -9,13 +9,12 @@ const Int_t NumOfChannelAGET = 68;
 
 Int_t     channel_map[NumOfAGETPerAsAd][NumOfAsAd][NumOfChannelAGET];
 
-void baseline(){
-
-  const int runnumber = 2278;
+void baseline(int runnumber){
+  gROOT->SetBatch(kTRUE);
   string dir = "/hsm/had/sks/E72/JPARC2025Nov/rootfile/tpcthreshold";
   TFile *file = new TFile(Form("%s/TpcThreshold_%d.root",dir.c_str(),runnumber));
-  string outpdf = Form("baseline_run0%d.pdf",runnumber);
-  TFile *f = new TFile(Form("baseline_run0%d.root",runnumber),"RECREATE");
+  string outpdf = Form("%s/baseline_run0%d.pdf",dir.c_str(),runnumber);
+  TFile *f = new TFile(Form("%s/baseline_run0%d.root",dir.c_str(),runnumber),"RECREATE");
   
   //start : Make Channel Map
   {
@@ -56,6 +55,7 @@ void baseline(){
 
   auto c1 = new TCanvas("c1","c1");
   gStyle->SetOptStat(0);
+  gStyle->SetOptTitle(1);
   TPaveText *p = new TPaveText(0.1,0.1,0.9,0.9,"NDC");
   p->AddText("baseline.cc");
   p->AddText("TPC Pad Baseline check");
@@ -82,8 +82,8 @@ void baseline(){
 	  if(h){
 	    h->SetName(Form("h_fadc%d",padid));
 	    h->SetTitle(Form("h_fadc%d",padid));
-	    h->SetMinimum(200);
-	    h->SetMaximum(1000);
+	    h->GetYaxis()->SetRangeUser(200,1000);
+	    gPad->SetTopMargin(0.08);
 	    h->Draw("colz");
 	    h->Write();
 	  }

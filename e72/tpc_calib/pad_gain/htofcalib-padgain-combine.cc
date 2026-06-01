@@ -4,7 +4,7 @@ const int runnumber[8] = {2489,2599, 2601, 2602, 2603, 2604, 2606, 2607};
 struct FitResult {
   TF1  *f = nullptr;
   TH1D *h = nullptr;
-  int rebin = 1;
+  //int rebin = 1;
 };
 
 bool IsGoodLandauFit(TH1D* h, TF1* f)
@@ -14,7 +14,7 @@ bool IsGoodLandauFit(TH1D* h, TF1* f)
   if(f->GetNDF() <= 0) return false;
   
   double chi2ndf = f->GetChisquare() / f->GetNDF();
-  if(chi2ndf > 5.0) return false;
+  //if(chi2ndf > 5.0) return false;
   
   double mpv   = f->GetParameter(1);
   double sigma = f->GetParameter(2);
@@ -27,7 +27,6 @@ bool IsGoodLandauFit(TH1D* h, TF1* f)
 FitResult FitLandauWithRetry(TH1D *hraw){
   std::vector<int> rebinList = {1, 2, 4};
   for(auto rebin : rebinList){
-
     TH1D *h = (TH1D*)hraw->Clone(Form("%s_tmp_rebin%d", hraw->GetName(), rebin));
     h->SetDirectory(0);
     h->Rebin(rebin);
@@ -35,11 +34,11 @@ FitResult FitLandauWithRetry(TH1D *hraw){
     f->SetParameter(1,200);
     f->SetParameter(2,33);
     f->SetLineColor(kRed);
-    int status = h->Fit(f,"RQ0");
+    int status = h->Fit(f,"RQ0N");
     if(IsGoodLandauFit(h, f)){
-      h->GetListOfFunctions()->Add(f);
-
-      return {f, h, rebin};
+      //h->GetListOfFunctions()->Add(f);
+      //return {f, h, rebin};
+      return {f, h};
     }
     delete f;
     delete h;
@@ -49,7 +48,7 @@ FitResult FitLandauWithRetry(TH1D *hraw){
 
 void htofcalib_padgain_combine(){
   gROOT->SetBatch(kTRUE);
-  string outpdf = "htofcalib-padgain-combine-260523.pdf";
+  string outpdf = "htofcalib-padgain-combine-260523_allpad.pdf";
   
   TH1D *hist_de[NumOfPadTPC];
 
@@ -98,7 +97,7 @@ void htofcalib_padgain_combine(){
   }
   
   for(int i=0;i<8;i++){
-    TFile *file = new TFile(Form("htofcalib-padgain-run0%d-260523.root",runnumber[i]));
+    TFile *file = new TFile(Form("htofcalib-padgain-run0%d-260523_allpad.root",runnumber[i]));
     TH2Poly *TPC_tr_cluster = (TH2Poly*)file->Get("TPC_tr_cluster");
     
     for(int n=0;n<TPC_tr_cluster->GetNumberOfBins();n++){
@@ -119,7 +118,7 @@ void htofcalib_padgain_combine(){
   }
 
 
-  TFile *f = new TFile("htofcalib-padgain-combine-260523.root","RECREATE");
+  TFile *f = new TFile("htofcalib-padgain-combine-260523_allpad.root","RECREATE");
   
   auto c1 = new TCanvas("c1","c1");
   gStyle->SetOptStat(0);
@@ -160,10 +159,12 @@ void htofcalib_padgain_combine(){
       //res.f->Write(Form("%s_fitfunc", hist_de[ipad]->GetName()));
 
     }
-    else{
-      hist_de[ipad]->Draw();
-      hist_de[ipad]->Write();
-    }
+    
+      else{
+	hist_de[ipad]->Draw();
+	hist_de[ipad]->Write();
+      }
+    
   }
 
   c1->Print(outpdf.c_str());
