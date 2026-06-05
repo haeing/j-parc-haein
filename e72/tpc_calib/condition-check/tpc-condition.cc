@@ -1,7 +1,7 @@
 #include "../TPCPadHelper_260416.hh"
 
-const int start_run = 3772;
-const int end_run = 3849;
+const int start_run = 2263;
+const int end_run = 3043;
 
 const int evt_ave = 100;
 
@@ -60,7 +60,7 @@ void tpc_condition(){
     TPad *plotPad = new TPad("plotPad","plotPad",0,0,1,0.94);
     plotPad->Draw();
     plotPad->cd();
-    plotPad->Divide(5,6);
+    plotPad->Divide(8,4);
     
     TH1D* hist_hitnum[NumOfAsadTPC];
     for(int i=0;i<NumOfAsadTPC;i++){
