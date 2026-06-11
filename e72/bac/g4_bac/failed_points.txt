@@ -1,1 +1,0 @@
-FAIL x=0 y=0 exit=134 out=/Users/ihaein/Work/E72/j-parc-haein/data/KEKAR2023Dec/g4_root/kek_aerogel3_x0_y0_total.root
