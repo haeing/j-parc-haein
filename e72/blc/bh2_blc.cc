@@ -10,11 +10,11 @@ const double tdc_bht_window_min = 1400000;
 const double tdc_bht_window_max = 1450000;
 
 void bh2_blc(){
-  int run = 2486;
+  int run = 2447;
   string dir = "/gpfs/group/had/sks/Users/haein/data/JPARC2025Nov_root";
   TFile *file_hodo = new TFile(Form("%s/run0%d_Hodoscope.root",dir.c_str(),run));
-  //TFile *file_bcin = new TFile(Form("%s/run0%d_BcInTracking_bcin13.root",dir.c_str(),run));
-  TFile *file_bcin = new TFile("~/work/e72/ana/e72/test_bcin.root");
+  TFile *file_bcin = new TFile(Form("%s/run0%d_BcInTracking.root",dir.c_str(),run));
+  //TFile *file_bcin = new TFile("~/work/e72/ana/e72/test_bcin.root");
   TFile *file_bcout = new TFile(Form("%s/run0%d_BcOutTracking.root",dir.c_str(),run));
 
   TTree *tree_hodo = (TTree*)file_hodo->Get("hodo");
@@ -94,6 +94,12 @@ void bh2_blc(){
   TH2D *hitpat_bht_bcout_x = new TH2D("hitpat_bht_bcout_x","hitpat_bht_bcout_x",NumOfSegBHT,-0.5,NumOfSegBHT-0.5,500,-200,200);
   TH2D *hitpat_bht_bcout_y = new TH2D("hitpat_bht_bcout_y","hitpat_bht_bcout_y",NumOfSegBHT,-0.5,NumOfSegBHT-0.5,500,-200,200);
 
+  TH2D *bcin_out_y = new TH2D("bcin_out_y","bcin_out_y",100,-300,300,100,-300,300);
+  TH2D *bcin_out_v = new TH2D("bcin_out_v","bcin_out_v",100,-300,300,100,-300,300);
+
+  TH2D* hist_bcin = new TH2D("hist_bcin","hist_bcin;X [mm];Y [mm]",200,-200,200,200,-200,200);
+  TH2D* hist_bcout = new TH2D("hist_bcout","hist_bcout;X [mm];Y [mm]",200,-200,200,200,-200,200);
+
   
   for(int i=0;i<NumOfSegBH2;i++){
     hist_bh2[i] = new TH1D(Form("hist_bh2%d",i),Form("hist_bh2%d",i),(tdc_max - tdc_min)/10.,tdc_min,tdc_max);
@@ -108,7 +114,13 @@ void bh2_blc(){
     
     if(bh2_raw_seg->empty())continue;
     if(bht_raw_seg->empty())continue;
+
+    if(x0_in->empty()||x0_out->empty())continue;
+    hist_bcin->Fill((*x0_in)[0],(*y0_in)[0]);
+    hist_bcout->Fill((*x0_out)[0],(*y0_out)[0]);
     
+    bcin_out_y->Fill((*y0_in)[0],(*y0_out)[0]);
+    bcin_out_v->Fill((*v0_in)[0],(*v0_out)[0]);
     for(int i=0;i<bh2_raw_seg->size();i++){
       bool bh2_pass = false;
       int bh2_seg = (*bh2_raw_seg)[i];
@@ -222,6 +234,20 @@ void bh2_blc(){
   hitpat_bht_bcout_x->Draw("colz");
   c->cd(2);
   hitpat_bht_bcout_y->Draw("colz");
+  c->Print("bh2_blc_260602.pdf");
+  
+  c->Clear();
+  c->Divide(2);
+  c->cd(1);
+  bcin_out_y->Draw("colz");
+  c->cd(2);
+  bcin_out_v->Draw("colz");
+  c->Print("bh2_blc_260602.pdf");
+  c->Clear();
+  hist_bcin->Draw("colz");
+  c->Print("bh2_blc_260602.pdf");
+  c->Clear();
+  hist_bcout->Draw("colz");
   c->Print("bh2_blc_260602.pdf");
   
   c->Print("bh2_blc_260602.pdf]");
